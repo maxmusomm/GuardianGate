@@ -45,7 +45,7 @@ export function VisitorList() {
   const [isCheckingOut, setIsCheckingOut] = useState<string | null>(null);
 
   const loadVisitors = useCallback(() => {
-    setLoading(true);
+    // setLoading(true); No longer needed here
     try {
       const storedVisitors = localStorage.getItem("visitors");
       if (storedVisitors) {
@@ -220,11 +220,11 @@ export function VisitorList() {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="current">
               <Users className="mr-2 h-4 w-4" />
-              Current Visitors ({currentVisitors.length})
+              Current Visitors ({loading ? 0 : currentVisitors.length})
             </TabsTrigger>
             <TabsTrigger value="history">
               <Clock className="mr-2 h-4 w-4" />
-              Historical Logs ({historicalVisitors.length})
+              Historical Logs ({loading ? 0 : historicalVisitors.length})
             </TabsTrigger>
           </TabsList>
           <TabsContent value="current">
