@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-import { useFormState } from "react-dom";
+import { useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -52,7 +51,7 @@ const initialState = {
 };
 
 export function CheckInForm() {
-  const [state, formAction] = useFormState(addVisitor, initialState);
+  const [state, formAction] = useActionState(addVisitor, initialState);
   const { toast } = useToast();
 
   const form = useForm<VisitorFormData>({
