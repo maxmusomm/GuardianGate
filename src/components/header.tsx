@@ -1,6 +1,4 @@
-import { ShieldCheck, BarChart2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { ShieldCheck } from "lucide-react";
 
 export function Header() {
   return (
@@ -16,12 +14,6 @@ export function Header() {
           </p>
         </div>
       </div>
-      <Link href="/analytics">
-        <Button variant="outline">
-          <BarChart2 className="mr-2 h-4 w-4" />
-          View Analytics
-        </Button>
-      </Link>
     </header>
   );
 }
