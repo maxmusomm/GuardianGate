@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -25,8 +26,9 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { Loader2, Users, BarChart2, User, Phone, ClipboardList, Clock, Building } from "lucide-react";
+import { Loader2, Users, BarChart2, User, Phone, ClipboardList, Clock, Building, ChevronDown } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface VisitorSummary {
   name: string;
@@ -40,6 +42,7 @@ interface VisitorSummary {
 export function VisitorAnalytics() {
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openAccordion, setOpenAccordion] = useState<string[]>([]);
 
   useEffect(() => {
     setLoading(true);
@@ -97,7 +100,7 @@ export function VisitorAnalytics() {
       </CardHeader>
       <CardContent>
         {visitorSummary.length > 0 ? (
-          <Accordion type="single" collapsible className="w-full">
+          <Accordion type="multiple" value={openAccordion} onValueChange={setOpenAccordion} className="w-full">
             <ScrollArea className="h-[600px] rounded-md border">
               <Table>
                 <TableHeader className="sticky top-0 bg-card">
@@ -111,8 +114,8 @@ export function VisitorAnalytics() {
                 </TableHeader>
                  <TableBody>
                   {visitorSummary.map((summary) => (
-                    <AccordionItem value={summary.idNumber} key={summary.idNumber}>
-                       <AccordionTrigger asChild>
+                    <AccordionItem value={summary.idNumber} key={summary.idNumber} className="border-b">
+                      <AccordionTrigger asChild>
                          <TableRow className="cursor-pointer">
                             <TableCell className="font-medium flex items-center gap-2">
                                 <User className="h-4 w-4 text-muted-foreground" />
@@ -126,12 +129,14 @@ export function VisitorAnalytics() {
                             <TableCell className="text-right">
                                 <Badge>{summary.visitCount}</Badge>
                             </TableCell>
-                            <TableCell></TableCell>
+                            <TableCell>
+                               <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform duration-200", openAccordion.includes(summary.idNumber) && "rotate-180" )} />
+                            </TableCell>
                          </TableRow>
                       </AccordionTrigger>
                       <AccordionContent asChild>
-                        <tr>
-                          <td colSpan={5} className="p-0">
+                        <TableRow>
+                          <TableCell colSpan={5} className="p-0">
                             <div className="p-4 bg-muted/50">
                               <h4 className="font-semibold mb-2 text-primary">Visit History for {summary.name}</h4>
                                <ScrollArea className="h-[200px] rounded-md border">
@@ -179,8 +184,8 @@ export function VisitorAnalytics() {
                                 </Table>
                                </ScrollArea>
                             </div>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       </AccordionContent>
                     </AccordionItem>
                   ))}
