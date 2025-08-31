@@ -21,21 +21,26 @@ export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUser(user);
-        setLoading(false);
-      } else {
+      } 
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const signIn = async () => {
+      if (!user && !loading) {
         try {
           const userCredential = await signInAnonymously(auth);
           setUser(userCredential.user);
         } catch (error) {
           console.error("Anonymous sign-in failed", error);
-        } finally {
-          setLoading(false);
         }
       }
-    });
-
-    return () => unsubscribe();
-  }, []);
+    }
+    signIn();
+  }, [user, loading]);
 
   if (loading) {
     return (
