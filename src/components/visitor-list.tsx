@@ -1,12 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { format } from "date-fns";
-import { db } from "@/lib/firebase/config";
 import type { Visitor } from "@/types/visitor";
 import { useToast } from "@/hooks/use-toast";
-import { checkoutVisitor } from "@/app/actions";
 import {
   Card,
   CardContent,
@@ -47,46 +44,67 @@ export function VisitorList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isCheckingOut, setIsCheckingOut] = useState<string | null>(null);
 
-  useEffect(() => {
-    const q = query(collection(db, "visitors"), orderBy("checkInTime", "desc"));
-    const unsubscribe = onSnapshot(
-      q,
-      (querySnapshot) => {
-        const visitorsData: Visitor[] = [];
-        querySnapshot.forEach((doc) => {
-          visitorsData.push({ id: doc.id, ...doc.data() } as Visitor);
-        });
-        setVisitors(visitorsData);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Error fetching visitors:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load visitor data.",
-        });
-        setLoading(false);
+  const loadVisitors = useCallback(() => {
+    setLoading(true);
+    try {
+      const storedVisitors = localStorage.getItem("visitors");
+      if (storedVisitors) {
+        const parsedVisitors: Visitor[] = JSON.parse(storedVisitors);
+        // Sort by check-in time descending
+        parsedVisitors.sort((a, b) => new Date(b.checkInTime).getTime() - new Date(a.checkInTime).getTime());
+        setVisitors(parsedVisitors);
+      } else {
+        setVisitors([]);
       }
-    );
-
-    return () => unsubscribe();
-  }, [toast]);
-
-  const handleCheckout = async (id: string) => {
-    setIsCheckingOut(id);
-    const result = await checkoutVisitor(id);
-    if (result.success) {
-      toast({
-        title: "Success",
-        description: "Visitor checked out successfully.",
-      });
-    } else {
+    } catch (error) {
+      console.error("Error loading visitors from localStorage:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: result.error,
+        description: "Failed to load visitor data.",
       });
+    } finally {
+        setLoading(false);
+    }
+  }, [toast]);
+  
+  useEffect(() => {
+    loadVisitors();
+
+    const handleStorageChange = () => loadVisitors();
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('visitorsUpdated', handleStorageChange);
+
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('visitorsUpdated', handleStorageChange);
+    };
+  }, [loadVisitors]);
+
+  const handleCheckout = async (id: string) => {
+    setIsCheckingOut(id);
+    try {
+        const storedVisitors = localStorage.getItem("visitors");
+        if(storedVisitors) {
+            let visitors: Visitor[] = JSON.parse(storedVisitors);
+            visitors = visitors.map(v => 
+                v.id === id ? { ...v, checkOutTime: new Date().toISOString() } : v
+            );
+            localStorage.setItem('visitors', JSON.stringify(visitors));
+            window.dispatchEvent(new Event('visitorsUpdated'));
+            toast({
+                title: "Success",
+                description: "Visitor checked out successfully.",
+            });
+        }
+    } catch (error) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to check out visitor.",
+        });
     }
     setIsCheckingOut(null);
   };
@@ -101,11 +119,11 @@ export function VisitorList() {
   }, [visitors, searchTerm]);
 
   const currentVisitors = useMemo(
-    () => filteredVisitors.filter((v) => v.checkOutTime === null),
+    () => filteredVisitors.filter((v) => v.checkOutTime === null || v.checkOutTime === undefined),
     [filteredVisitors]
   );
   const historicalVisitors = useMemo(
-    () => filteredVisitors.filter((v) => v.checkOutTime !== null),
+    () => filteredVisitors.filter((v) => v.checkOutTime !== null && v.checkOutTime !== undefined),
     [filteredVisitors]
   );
   
@@ -136,11 +154,11 @@ export function VisitorList() {
         <TableCell>{visitor.idNumber}</TableCell>
         <TableCell>{visitor.phoneNumber}</TableCell>
         <TableCell>
-          {visitor.checkInTime ? format(visitor.checkInTime.toDate(), 'PPpp') : 'N/A'}
+          {visitor.checkInTime ? format(new Date(visitor.checkInTime), 'PPpp') : 'N/A'}
         </TableCell>
         <TableCell>
           {isHistory && visitor.checkOutTime ? (
-            <Badge variant="secondary">{format(visitor.checkOutTime.toDate(), 'PPpp')}</Badge>
+            <Badge variant="secondary">{format(new Date(visitor.checkOutTime), 'PPpp')}</Badge>
           ) : (
             <Badge>Checked In</Badge>
           )}

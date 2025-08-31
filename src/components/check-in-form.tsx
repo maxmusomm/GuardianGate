@@ -24,7 +24,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-  Briefcase,
   Building,
   ClipboardList,
   Fingerprint,
@@ -33,6 +32,7 @@ import {
   User,
   UserCheck,
 } from "lucide-react";
+import type { Visitor } from "@/types/visitor";
 
 const visitorSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -45,7 +45,11 @@ const visitorSchema = z.object({
 
 type VisitorFormData = z.infer<typeof visitorSchema>;
 
-const initialState = {
+const initialState: {
+    error: any;
+    success: boolean;
+    data?: VisitorFormData;
+} = {
   error: null,
   success: false,
 };
@@ -67,12 +71,35 @@ export function CheckInForm() {
   });
 
   useEffect(() => {
-    if (state.success) {
-      toast({
-        title: "Success",
-        description: "Visitor checked in successfully.",
-      });
-      form.reset();
+    if (state.success && state.data) {
+      try {
+        const newVisitor: Omit<Visitor, 'checkOutTime'> = {
+          ...state.data,
+          id: crypto.randomUUID(),
+          checkInTime: new Date().toISOString(),
+        };
+
+        const existingVisitors = JSON.parse(localStorage.getItem('visitors') || '[]');
+        localStorage.setItem('visitors', JSON.stringify([...existingVisitors, newVisitor]));
+        
+        // Trigger a custom event to notify the visitor list to update
+        window.dispatchEvent(new Event('visitorsUpdated'));
+        
+        toast({
+          title: "Success",
+          description: "Visitor checked in successfully.",
+        });
+        form.reset();
+      } catch (error) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to save visitor data.",
+        });
+      }
+
+    } else if (state.error && typeof state.error !== 'string') {
+        // This handles Zod validation errors
     } else if (state.error && typeof state.error === 'string') {
       toast({
         variant: "destructive",

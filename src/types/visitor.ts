@@ -1,5 +1,3 @@
-import type { Timestamp } from "firebase/firestore";
-
 export interface Visitor {
   id: string;
   name: string;
@@ -8,6 +6,6 @@ export interface Visitor {
   purposeOfVisit: string;
   personForVisit: string;
   organisation: string;
-  checkInTime: Timestamp;
-  checkOutTime: Timestamp | null;
+  checkInTime: string; // ISO 8601 string
+  checkOutTime: string | null; // ISO 8601 string
 }

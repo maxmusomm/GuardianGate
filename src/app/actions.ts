@@ -2,8 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { addDoc, collection, doc, serverTimestamp, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase/config";
 
 const visitorSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -14,6 +12,11 @@ const visitorSchema = z.object({
   organisation: z.string().min(2, "Organisation is required."),
 });
 
+// Note: These actions will not work as expected because they are server actions
+// and localStorage is not available on the server.
+// The logic has been moved to the client-side components.
+// These are kept for compatibility with the form action.
+
 export async function addVisitor(prevState: any, formData: FormData) {
   const validatedFields = visitorSchema.safeParse(Object.fromEntries(formData.entries()));
 
@@ -23,31 +26,11 @@ export async function addVisitor(prevState: any, formData: FormData) {
     };
   }
   
-  try {
-    await addDoc(collection(db, "visitors"), {
-      ...validatedFields.data,
-      checkInTime: serverTimestamp(),
-      checkOutTime: null,
-    });
-    
-    revalidatePath("/");
-    return { success: true };
-  } catch (error) {
-    console.error("Error adding visitor:", error);
-    return { error: "Failed to check in visitor. Please try again." };
-  }
+  revalidatePath("/");
+  return { success: true, data: validatedFields.data };
 }
 
 export async function checkoutVisitor(id: string) {
-  try {
-    const visitorRef = doc(db, "visitors", id);
-    await updateDoc(visitorRef, {
-      checkOutTime: serverTimestamp(),
-    });
-    revalidatePath("/");
-    return { success: true };
-  } catch (error) {
-    console.error("Error checking out visitor:", error);
-    return { error: "Failed to check out visitor. Please try again." };
-  }
+  revalidatePath("/");
+  return { success: true };
 }
