@@ -2,12 +2,12 @@
 
 ## Core Features:
 
-- Anonymous Authentication: Automatically sign in users anonymously upon their first visit to the application, creating a session without requiring credentials.
 - Visitor Check-in Form: Capture visitor details: Name, ID, Phone Number, Purpose, Person to Visit, and Organisation/Company.
 - Real-time Visitor Display: Show a live-updating list of visitors currently on-site with check-in timestamps.
 - Visitor Search: Search and locate visitor records efficiently by ID or phone number to facilitate quick check-outs.
 - One-Click Check-out: Update the visitor's record with a check-out timestamp using a single button.
 - Historical Logs: Generate list of all vistor logs regardless of if the user has been checked out.
+- Data Persistence: Persist data to local storage
 
 ## Style Guidelines:
 
