@@ -34,8 +34,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Clock, LogOut, Search, Users, Loader2 } from "lucide-react";
-import { ScrollArea } from "./ui/scroll-area";
+import { Clock, LogOut, Search, Users, Loader2, User, Phone, Fingerprint } from "lucide-react";
 
 export function VisitorList() {
   const { toast } = useToast();
@@ -45,12 +44,10 @@ export function VisitorList() {
   const [isCheckingOut, setIsCheckingOut] = useState<string | null>(null);
 
   const loadVisitors = useCallback(() => {
-    // setLoading(true); No longer needed here
     try {
       const storedVisitors = localStorage.getItem("visitors");
       if (storedVisitors) {
         const parsedVisitors: Visitor[] = JSON.parse(storedVisitors);
-        // Sort by check-in time descending
         parsedVisitors.sort((a, b) => new Date(b.checkInTime).getTime() - new Date(a.checkInTime).getTime());
         setVisitors(parsedVisitors);
       } else {
@@ -70,13 +67,9 @@ export function VisitorList() {
   
   useEffect(() => {
     loadVisitors();
-
     const handleStorageChange = () => loadVisitors();
-
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('visitorsUpdated', handleStorageChange);
-
-
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('visitorsUpdated', handleStorageChange);
@@ -127,69 +120,141 @@ export function VisitorList() {
     [filteredVisitors]
   );
   
-  const renderVisitorRows = (visitorList: Visitor[], isHistory = false) => {
+  const VisitorCard = ({ visitor, isHistory = false }: { visitor: Visitor, isHistory?: boolean }) => (
+    <Card className="mb-4">
+      <CardHeader>
+        <div className="flex justify-between items-start">
+            <div>
+                <CardTitle className="flex items-center gap-2"><User />{visitor.name}</CardTitle>
+                <CardDescription>
+                    <div className="flex items-center gap-2 mt-2"><Fingerprint className="h-4 w-4" /> ID: {visitor.idNumber}</div>
+                    <div className="flex items-center gap-2 mt-1"><Phone className="h-4 w-4" /> {visitor.phoneNumber}</div>
+                </CardDescription>
+            </div>
+             {!isHistory && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" disabled={isCheckingOut === visitor.id}>
+                      {isCheckingOut === visitor.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <LogOut className="h-4 w-4 text-destructive" />}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will check out <span className="font-bold">{visitor.name}</span>. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleCheckout(visitor.id)}>
+                        Check Out
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+        </div>
+      </CardHeader>
+      <CardContent className="text-sm">
+        <div className="flex items-center gap-2 mb-2">
+            <Clock className="h-4 w-4 text-muted-foreground"/>
+            <div>
+                <strong>Checked In:</strong> {visitor.checkInTime ? format(new Date(visitor.checkInTime), 'PPpp') : 'N/A'}
+            </div>
+        </div>
+        {isHistory && visitor.checkOutTime && (
+            <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground"/>
+                 <div>
+                    <strong>Checked Out:</strong> {format(new Date(visitor.checkOutTime), 'PPpp')}
+                </div>
+            </div>
+        )}
+        {!isHistory && <Badge>Checked In</Badge>}
+      </CardContent>
+    </Card>
+  );
+
+  const renderVisitorList = (visitorList: Visitor[], isHistory = false) => {
     if (loading) {
-      return (
-        <TableRow>
-          <TableCell colSpan={6} className="h-24 text-center">
-            <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
-          </TableCell>
-        </TableRow>
-      );
+      return <div className="flex justify-center items-center h-24"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
     }
 
     if (visitorList.length === 0) {
-      return (
-        <TableRow>
-          <TableCell colSpan={6} className="h-24 text-center">
-            No visitors found.
-          </TableCell>
-        </TableRow>
-      );
+      return <div className="text-center py-10 text-muted-foreground">No visitors found.</div>;
     }
     
-    return visitorList.map((visitor) => (
-      <TableRow key={visitor.id}>
-        <TableCell className="font-medium">{visitor.name}</TableCell>
-        <TableCell>{visitor.idNumber}</TableCell>
-        <TableCell>{visitor.phoneNumber}</TableCell>
-        <TableCell>
-          {visitor.checkInTime ? format(new Date(visitor.checkInTime), 'PPpp') : 'N/A'}
-        </TableCell>
-        <TableCell>
-          {isHistory && visitor.checkOutTime ? (
-            <Badge variant="secondary">{format(new Date(visitor.checkOutTime), 'PPpp')}</Badge>
-          ) : (
-            <Badge>Checked In</Badge>
-          )}
-        </TableCell>
-        <TableCell className="text-right">
-          {!isHistory && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" disabled={isCheckingOut === visitor.id}>
-                  {isCheckingOut === visitor.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <LogOut className="h-4 w-4 text-destructive" />}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will check out <span className="font-bold">{visitor.name}</span>. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => handleCheckout(visitor.id)}>
-                    Check Out
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-        </TableCell>
-      </TableRow>
-    ));
+    return (
+        <>
+            {/* Mobile View */}
+            <div className="md:hidden space-y-4 p-4">
+                {visitorList.map((visitor) => (
+                    <VisitorCard key={visitor.id} visitor={visitor} isHistory={isHistory} />
+                ))}
+            </div>
+
+            {/* Desktop View */}
+            <div className="hidden md:block rounded-md border">
+                <Table>
+                    <TableHeader>
+                    <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>ID Number</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>Checked In</TableHead>
+                        <TableHead>{isHistory ? "Checked Out" : "Status"}</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                    {visitorList.map((visitor) => (
+                        <TableRow key={visitor.id}>
+                            <TableCell className="font-medium">{visitor.name}</TableCell>
+                            <TableCell>{visitor.idNumber}</TableCell>
+                            <TableCell>{visitor.phoneNumber}</TableCell>
+                            <TableCell>
+                            {visitor.checkInTime ? format(new Date(visitor.checkInTime), 'PPpp') : 'N/A'}
+                            </TableCell>
+                            <TableCell>
+                            {isHistory && visitor.checkOutTime ? (
+                                <Badge variant="secondary">{format(new Date(visitor.checkOutTime), 'PPpp')}</Badge>
+                            ) : (
+                                <Badge>Checked In</Badge>
+                            )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                            {!isHistory && (
+                                <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" disabled={isCheckingOut === visitor.id}>
+                                    {isCheckingOut === visitor.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <LogOut className="h-4 w-4 text-destructive" />}
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This will check out <span className="font-bold">{visitor.name}</span>. This action cannot be undone.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleCheckout(visitor.id)}>
+                                        Check Out
+                                    </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                                </AlertDialog>
+                            )}
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                    </TableBody>
+                </Table>
+            </div>
+        </>
+    );
   };
 
 
@@ -227,39 +292,11 @@ export function VisitorList() {
               Historical Logs ({loading ? 0 : historicalVisitors.length})
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="current">
-            <ScrollArea className="h-[400px] rounded-md border">
-              <Table>
-                <TableHeader className="sticky top-0 bg-card">
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>ID Number</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Checked In</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>{renderVisitorRows(currentVisitors)}</TableBody>
-              </Table>
-            </ScrollArea>
+          <TabsContent value="current" className="mt-4">
+            {renderVisitorList(currentVisitors)}
           </TabsContent>
-          <TabsContent value="history">
-            <ScrollArea className="h-[400px] rounded-md border">
-              <Table>
-                <TableHeader className="sticky top-0 bg-card">
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>ID Number</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Checked In</TableHead>
-                    <TableHead>Checked Out</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>{renderVisitorRows(historicalVisitors, true)}</TableBody>
-              </Table>
-            </ScrollArea>
+          <TabsContent value="history" className="mt-4">
+            {renderVisitorList(historicalVisitors, true)}
           </TabsContent>
         </Tabs>
       </CardContent>
