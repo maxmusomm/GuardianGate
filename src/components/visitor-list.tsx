@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -34,7 +35,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Clock, LogOut, Search, Users, Loader2, User, Phone, Fingerprint } from "lucide-react";
+import { Clock, LogOut, Search, Users, Loader2, User, Phone, Fingerprint, FileDown } from "lucide-react";
 
 export function VisitorList() {
   const { toast } = useToast();
@@ -66,6 +67,7 @@ export function VisitorList() {
   }, [toast]);
   
   useEffect(() => {
+    setLoading(true);
     loadVisitors();
     const handleStorageChange = () => loadVisitors();
     window.addEventListener('storage', handleStorageChange);
@@ -188,7 +190,7 @@ export function VisitorList() {
     return (
         <>
             {/* Mobile View */}
-            <div className="md:hidden space-y-4 p-4">
+            <div className="md:hidden space-y-4">
                 {visitorList.map((visitor) => (
                     <VisitorCard key={visitor.id} visitor={visitor} isHistory={isHistory} />
                 ))}
@@ -289,13 +291,19 @@ export function VisitorList() {
             </TabsTrigger>
             <TabsTrigger value="history">
               <Clock className="mr-2 h-4 w-4" />
-              Historical Logs ({loading ? 0 : historicalVisitors.length})
+              Monthly Logs ({loading ? 0 : historicalVisitors.length})
             </TabsTrigger>
           </TabsList>
           <TabsContent value="current" className="mt-4">
             {renderVisitorList(currentVisitors)}
           </TabsContent>
           <TabsContent value="history" className="mt-4">
+            <div className="flex justify-end mb-4">
+                <Button variant="outline">
+                    <FileDown className="mr-2 h-4 w-4" />
+                    Export as Sheet
+                </Button>
+            </div>
             {renderVisitorList(historicalVisitors, true)}
           </TabsContent>
         </Tabs>
@@ -303,3 +311,5 @@ export function VisitorList() {
     </Card>
   );
 }
+
+    
