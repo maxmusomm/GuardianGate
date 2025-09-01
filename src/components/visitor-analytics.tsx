@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { Loader2, Users, BarChart2, User, Phone, ClipboardList, Clock, Building, ChevronDown, Search } from "lucide-react";
+import { Loader2, Users, BarChart2, User, Clock, ClipboardList, Building, ChevronDown, Search } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Input } from "./ui/input";
@@ -121,8 +121,8 @@ export function VisitorAnalytics() {
       </CardHeader>
       <CardContent>
         {visitorSummary.length > 0 ? (
-          <Accordion type="multiple" value={openAccordion} onValueChange={setOpenAccordion} className="w-full">
-            <ScrollArea className="h-[600px] rounded-md border">
+          <ScrollArea className="h-[600px] rounded-md border">
+            <Accordion type="multiple" value={openAccordion} onValueChange={setOpenAccordion} className="w-full" asChild>
               <Table>
                 <TableHeader className="sticky top-0 bg-card">
                    <TableRow>
@@ -137,29 +137,31 @@ export function VisitorAnalytics() {
                   {visitorSummary.map((summary) => (
                     <AccordionItem value={summary.idNumber} key={summary.idNumber} asChild>
                       <>
-                        <AccordionTrigger asChild>
-                           <TableRow className="cursor-pointer">
-                              <TableCell className="font-medium flex items-center gap-2">
-                                  <User className="h-4 w-4 text-muted-foreground" />
-                                  {summary.name}
-                              </TableCell>
-                              <TableCell>{summary.idNumber}</TableCell>
-                               <TableCell>
-                                  <Building className="h-4 w-4 text-muted-foreground inline-block mr-2" />
-                                  {summary.organisation}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                  <Badge>{summary.visitCount}</Badge>
-                              </TableCell>
-                              <TableCell>
-                                 <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform duration-200", openAccordion.includes(summary.idNumber) && "rotate-180" )} />
-                              </TableCell>
-                           </TableRow>
-                        </AccordionTrigger>
-                        <AccordionContent asChild>
-                           <tr className="bg-muted/50">
-                                <td colSpan={5} className="p-0">
-                                    <div className="p-4">
+                        <TableRow>
+                           <TableCell colSpan={5} className="p-0">
+                                <AccordionTrigger className="flex w-full items-center p-4">
+                                     <span className="font-medium flex items-center gap-2 flex-1 text-left">
+                                      <User className="h-4 w-4 text-muted-foreground" />
+                                      {summary.name}
+                                    </span>
+                                    <span className="flex-1 text-left">{summary.idNumber}</span>
+                                    <span className="flex-1 text-left flex items-center gap-2">
+                                      <Building className="h-4 w-4 text-muted-foreground" />
+                                      {summary.organisation}
+                                    </span>
+                                    <span className="flex-1 text-right">
+                                        <Badge>{summary.visitCount}</Badge>
+                                    </span>
+                                     <span className="w-[50px] flex justify-center">
+                                         <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform duration-200", openAccordion.includes(summary.idNumber) && "rotate-180" )} />
+                                     </span>
+                                </AccordionTrigger>
+                           </TableCell>
+                        </TableRow>
+                        <TableRow>
+                            <TableCell colSpan={5} className="p-0">
+                                <AccordionContent>
+                                    <div className="p-4 bg-muted/50">
                                         <h4 className="font-semibold mb-2 text-primary">Visit History for {summary.name}</h4>
                                         <ScrollArea className="h-[200px] rounded-md border bg-card">
                                             <Table>
@@ -206,16 +208,16 @@ export function VisitorAnalytics() {
                                             </Table>
                                         </ScrollArea>
                                     </div>
-                                </td>
-                           </tr>
-                        </AccordionContent>
+                                </AccordionContent>
+                            </TableCell>
+                        </TableRow>
                       </>
                     </AccordionItem>
                   ))}
                  </TableBody>
               </Table>
-            </ScrollArea>
-          </Accordion>
+            </Accordion>
+          </ScrollArea>
         ) : (
           <div className="h-48 flex flex-col items-center justify-center text-center">
             <Users className="h-12 w-12 text-muted-foreground" />
