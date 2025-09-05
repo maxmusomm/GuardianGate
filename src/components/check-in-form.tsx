@@ -1,10 +1,9 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { addVisitor } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import {
   Card,
@@ -32,7 +31,6 @@ import {
   User,
   UserCheck,
 } from "lucide-react";
-import type { Visitor } from "@/types/visitor";
 
 const visitorSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -45,17 +43,7 @@ const visitorSchema = z.object({
 
 type VisitorFormData = z.infer<typeof visitorSchema>;
 
-const initialState: {
-    error: any;
-    success: boolean;
-    data?: VisitorFormData;
-} = {
-  error: null,
-  success: false,
-};
-
 export function CheckInForm() {
-  const [state, formAction] = useActionState(addVisitor, initialState);
   const { toast } = useToast();
 
   const form = useForm<VisitorFormData>({
@@ -70,44 +58,35 @@ export function CheckInForm() {
     },
   });
 
-  useEffect(() => {
-    if (state.success && state.data) {
-      try {
-        const newVisitor: Omit<Visitor, 'checkOutTime'> = {
-          ...state.data,
-          id: crypto.randomUUID(),
-          checkInTime: new Date().toISOString(),
-        };
+  const onSubmit = async (data: VisitorFormData) => {
+    try {
+      const res = await fetch("/api/visitors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-        const existingVisitors = JSON.parse(localStorage.getItem('visitors') || '[]');
-        localStorage.setItem('visitors', JSON.stringify([...existingVisitors, newVisitor]));
-        
-        // Trigger a custom event to notify the visitor list to update
-        window.dispatchEvent(new Event('visitorsUpdated'));
-        
-        toast({
-          title: "Success",
-          description: "Visitor checked in successfully.",
-        });
-        form.reset();
-      } catch (error) {
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to save visitor data.",
-        });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json?.error || "Failed to save visitor");
       }
 
-    } else if (state.error && typeof state.error !== 'string') {
-        // This handles Zod validation errors
-    } else if (state.error && typeof state.error === 'string') {
+      toast({
+        title: "Success",
+        description: "Visitor checked in successfully.",
+      });
+      form.reset();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("visitorsUpdated"));
+      }
+    } catch (err: any) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: state.error,
+        description: err?.message || "Could not save visitor",
       });
     }
-  }, [state, toast, form]);
+  };
 
   return (
     <Card className="shadow-lg">
@@ -122,7 +101,7 @@ export function CheckInForm() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form action={formAction} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -132,13 +111,18 @@ export function CheckInForm() {
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <FormControl>
-                      <Input placeholder="e.g. John Doe" {...field} className="pl-10" />
+                      <Input
+                        placeholder="e.g. John Doe"
+                        {...field}
+                        className="pl-10"
+                      />
                     </FormControl>
                   </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -149,13 +133,18 @@ export function CheckInForm() {
                     <div className="relative">
                       <Fingerprint className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <FormControl>
-                        <Input placeholder="e.g. 12345678" {...field} className="pl-10" />
+                        <Input
+                          placeholder="e.g. 12345678"
+                          {...field}
+                          className="pl-10"
+                        />
                       </FormControl>
                     </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="phoneNumber"
@@ -165,7 +154,11 @@ export function CheckInForm() {
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <FormControl>
-                        <Input placeholder="e.g. 555-123-4567" {...field} className="pl-10" />
+                        <Input
+                          placeholder="e.g. 555-123-4567"
+                          {...field}
+                          className="pl-10"
+                        />
                       </FormControl>
                     </div>
                     <FormMessage />
@@ -173,55 +166,75 @@ export function CheckInForm() {
                 )}
               />
             </div>
+
             <FormField
               control={form.control}
               name="organisation"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Organisation / Company</FormLabel>
-                   <div className="relative">
-                      <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <FormControl>
-                        <Input placeholder="e.g. Acme Inc." {...field} className="pl-10" />
-                      </FormControl>
-                    </div>
+                  <div className="relative">
+                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <FormControl>
+                      <Input
+                        placeholder="e.g. Acme Inc."
+                        {...field}
+                        className="pl-10"
+                      />
+                    </FormControl>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
-             <FormField
+
+            <FormField
               control={form.control}
               name="personForVisit"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Person to Visit</FormLabel>
-                   <div className="relative">
-                      <UserCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <FormControl>
-                        <Input placeholder="e.g. Jane Smith" {...field} className="pl-10" />
-                      </FormControl>
-                    </div>
+                  <div className="relative">
+                    <UserCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <FormControl>
+                      <Input
+                        placeholder="e.g. Jane Smith"
+                        {...field}
+                        className="pl-10"
+                      />
+                    </FormControl>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="purposeOfVisit"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Purpose of Visit</FormLabel>
-                   <div className="relative">
-                      <ClipboardList className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <FormControl>
-                        <Input placeholder="e.g. Delivery, Meeting" {...field} className="pl-10" />
-                      </FormControl>
-                    </div>
+                  <div className="relative">
+                    <ClipboardList className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <FormControl>
+                      <Input
+                        placeholder="e.g. Delivery, Meeting"
+                        {...field}
+                        className="pl-10"
+                      />
+                    </FormControl>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={form.formState.isSubmitting}
+            >
               <LogIn className="mr-2 h-4 w-4" />
               Check In Visitor
             </Button>

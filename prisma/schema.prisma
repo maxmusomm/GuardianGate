@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String @id
+  teamLeaderName String @map("team_leader_name")
+  organisation   String
+  companyNumber  String @map("company_number")
+  email          String
+
+  @@map("users")
+}
+
+model Visitor {
+  id             String    @id @default(uuid())
+  name           String
+  idNumber       String
+  phoneNumber    String
+  purposeOfVisit String    @map("purpose_of_visit")
+  personForVisit String    @map("person_for_visit")
+  organisation   String?
+  checkedInAt    DateTime  @default(now()) @map("checked_in_at")
+  checkedOutAt   DateTime? @map("checked_out_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@map("visitors")
+}

@@ -153,3 +153,56 @@ This document assumes a Next.js app-router project structure (which matches the 
 ---
 
 Created-by: automated instruction generator
+
+## Changes implemented (summary)
+
+Date: 2025-09-03
+
+The following concrete authentication work was added to the repository as part of the `auth_setup` branch. This section records what was implemented, where, and the expected runtime behavior.
+
+- Users table (already recorded in `003_add-users-context-creation.context-creation.md`): `src/db/schema.ts` — `users` table with required fields: `team_leader_name`, `organisation`, `company_number`, `email`, `password`.
+
+- DB helpers: `src/utils/dbMethods.ts`
+
+  - Added `db` accessor (drizzle), `getUserByEmail`, `getUserFromDb`, and `createUser` helpers used by auth flows.
+  - Kept DB operations server-side; dynamic imports used for native dependencies where appropriate.
+
+- Password hashing: `src/utils/password.ts`
+
+  - `hashPassword` implemented using dynamic import of `argon2` to avoid bundling server-native modules into client builds.
+
+- Auth core: `src/auth.ts`
+
+  - Configured Auth.js (NextAuth) Credentials provider authorize callback to validate credentials against the DB.
+  - Implemented and exported `signUp(signUpData)` which:
+    - validates required fields, checks duplicate email,
+    - hashes password and creates the user in the `users` table via `createUser`,
+    - returns { ok, status, user|error } for use by API routes.
+
+- API endpoints added:
+
+  - `src/app/api/auth/signup/route.ts` — POST endpoint that calls `signUp` to create new users.
+  - `src/app/api/auth/check/route.ts` — (added) POST endpoint that verifies credentials and returns explicit reasons (invalid input, unknown email, wrong password) for improved client UX.
+
+- Signup page wired: `src/app/signup/page.tsx`
+
+  - Replaced UI-only mock with a POST to `/api/auth/signup` and displays server success/errors.
+
+- Login page wired: `src/app/login/page.tsx`
+  - Client uses `next-auth` client `signIn('credentials', { redirect: false })`.
+  - Calls `/api/auth/check` first to surface explicit error messages (invalid email format, unknown email, wrong password). On success it calls `signIn` and redirects to `/check-in`.
+
+Notes and caveats
+
+- Some server-only native modules (argon2, node:crypto) required dynamic imports to avoid Turbopack/Next.js bundling errors during build. Server-only code was isolated where possible; if you see bundling errors again, move DB and native imports into API-route-only modules (for example `src/server/db.ts`) and avoid importing them in files that may be bundled for the client.
+- The sign-in flow currently casts DB user objects to satisfy NextAuth's User typing (DB id is numeric). This is a small typing shim; consider normalizing the user id type or updating NextAuth user typing if desired.
+
+How to exercise
+
+- Start dev server and visit `/signup` to create an account (server will create a row in the `users` table).
+- Visit `/login`, enter credentials. If credential check fails, you will see a descriptive message from `/api/auth/check`. On success you will be redirected to `/check-in`.
+
+Follow-ups (recommended)
+
+- Add unit tests for `signUp` and `/api/auth/check` (happy path + duplicate/wrong password scenarios).
+- Consider adding server-only module file (e.g. `src/server/db.ts`) to guarantee server-only imports and avoid bundler analysis issues.

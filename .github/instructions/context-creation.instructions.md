@@ -13,4 +13,4 @@ When every you make a change updating, creating or deleting files in this repo, 
     - `cleanup` for instructions that create or update cleanup scripts
     - `file-update` for instructions that update existing files without creating new scripts
     - minor tweaks or fixes that don't require a new instruction file can be made directly to existing files without creating a new instruction file
-  # Example: `002_add-authjs-integration-context-creation.md`
+  # Example: `002_add-authjs-integration_code-update.md`
