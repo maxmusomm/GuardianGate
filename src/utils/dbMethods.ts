@@ -125,3 +125,28 @@ export const listRecentVisitors = async (limit = 50) => {
     return [];
   }
 };
+
+// Update user record (partial update)
+export const updateUser = async (
+  id: string,
+  data: Partial<{
+    teamLeaderName: string;
+    organisation: string;
+    companyNumber: string;
+  }>
+) => {
+  try {
+    const updated = await prisma.user.update({
+      where: { id },
+      data: {
+        teamLeaderName: data.teamLeaderName,
+        organisation: data.organisation,
+        companyNumber: data.companyNumber,
+      },
+    });
+    return updated;
+  } catch (err) {
+    console.error("Error updating user", err);
+    return null;
+  }
+};

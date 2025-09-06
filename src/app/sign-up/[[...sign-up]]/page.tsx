@@ -10,7 +10,7 @@ export default function LoginPage() {
     <main className="mx-auto max-w-3xl p-6">
       <div className="mx-auto mt-8 max-w-md">
         <Header />
-        <SignUp fallbackRedirectUrl={"/onboarding"} />
+        <SignUp fallbackRedirectUrl={"/user-details"} />
       </div>
     </main>
   );

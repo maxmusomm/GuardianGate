@@ -15,6 +15,9 @@ export default async function Home() {
         <div className="flex justify-between items-center">
           <Header />
           <div className="flex items-center gap-2">
+            <Link href="/user-details">
+              <Button variant="ghost">User details</Button>
+            </Link>
             <Link href="/analytics">
               <Button variant="outline">
                 <BarChart2 className="mr-2 h-4 w-4" />
