@@ -67,6 +67,7 @@ export type Visitor = {
   purposeOfVisit: string;
   personForVisit: string;
   organisation?: string | null;
+  hostId?: string | null;
   checkedInAt?: Date;
   checkedOutAt?: Date | null;
 };
@@ -81,6 +82,7 @@ export const createVisitor = async (payload: Visitor) => {
         purposeOfVisit: payload.purposeOfVisit,
         personForVisit: payload.personForVisit,
         organisation: payload.organisation ?? null,
+        hostId: payload.hostId ?? null,
       },
     });
     return created;

@@ -6,6 +6,7 @@ export interface Visitor {
   purposeOfVisit: string;
   personForVisit: string;
   organisation: string;
+  hostId?: string | null;
   checkInTime: string; // ISO 8601 string
   checkOutTime: string | null; // ISO 8601 string
 }

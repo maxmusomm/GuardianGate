@@ -17,12 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+// Accordion removed: use local expand/collapse to avoid forwarding props to Fragment
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import {
@@ -147,139 +142,139 @@ export function VisitorAnalytics() {
       <CardContent>
         {visitorSummary.length > 0 ? (
           <ScrollArea className="h-[600px] rounded-md border">
-            <Accordion
-              type="multiple"
-              value={openAccordion}
-              onValueChange={setOpenAccordion}
-              className="w-full"
-              asChild
-            >
-              <Table>
-                <TableHeader className="sticky top-0 bg-card">
-                  <TableRow>
-                    <TableHead className="w-[250px]">Name</TableHead>
-                    <TableHead>ID Number</TableHead>
-                    <TableHead>Organisation</TableHead>
-                    <TableHead className="text-right">Total Visits</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {visitorSummary.map((summary) => (
-                    <AccordionItem
-                      value={summary.idNumber}
-                      key={summary.idNumber}
-                      asChild
-                    >
-                      <>
-                        <TableRow>
-                          <TableCell colSpan={5} className="p-0">
-                            <AccordionTrigger className="flex w-full items-center p-4">
-                              <span className="font-medium flex items-center gap-2 flex-1 text-left">
-                                <User className="h-4 w-4 text-muted-foreground" />
-                                {summary.name}
-                              </span>
-                              <span className="flex-1 text-left">
-                                {summary.idNumber}
-                              </span>
-                              <span className="flex-1 text-left flex items-center gap-2">
-                                <Building className="h-4 w-4 text-muted-foreground" />
-                                {summary.organisation}
-                              </span>
-                              <span className="flex-1 text-right">
-                                <Badge>{summary.visitCount}</Badge>
-                              </span>
-                              <span className="w-[50px] flex justify-center">
-                                <ChevronDown
-                                  className={cn(
-                                    "h-4 w-4 shrink-0 transition-transform duration-200",
-                                    openAccordion.includes(summary.idNumber) &&
-                                      "rotate-180"
-                                  )}
-                                />
-                              </span>
-                            </AccordionTrigger>
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell colSpan={5} className="p-0">
-                            <AccordionContent>
-                              <div className="p-4 bg-muted/50">
-                                <h4 className="font-semibold mb-2 text-primary">
-                                  Visit History for {summary.name}
-                                </h4>
-                                <ScrollArea className="h-[200px] rounded-md border bg-card">
-                                  <Table>
-                                    <TableHeader>
-                                      <TableRow>
-                                        <TableHead>Check-in Time</TableHead>
-                                        <TableHead>Check-out Time</TableHead>
-                                        <TableHead>Purpose of Visit</TableHead>
-                                        <TableHead>Person Visited</TableHead>
-                                      </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                      {summary.visits
-                                        .sort(
-                                          (a, b) =>
-                                            new Date(b.checkInTime).getTime() -
-                                            new Date(a.checkInTime).getTime()
-                                        )
-                                        .map((visit) => (
-                                          <TableRow key={visit.id}>
-                                            <TableCell>
-                                              <div className="flex items-center gap-2">
-                                                <Clock className="h-4 w-4 text-muted-foreground" />
-                                                {format(
-                                                  new Date(visit.checkInTime),
-                                                  "PPpp"
-                                                )}
-                                              </div>
-                                            </TableCell>
-                                            <TableCell>
-                                              {visit.checkOutTime ? (
-                                                <div className="flex items-center gap-2">
-                                                  <Clock className="h-4 w-4 text-muted-foreground" />
-                                                  {format(
-                                                    new Date(
-                                                      visit.checkOutTime
-                                                    ),
-                                                    "PPpp"
-                                                  )}
-                                                </div>
-                                              ) : (
-                                                <Badge variant="secondary">
-                                                  Still Checked In
-                                                </Badge>
+            <Table>
+              <TableHeader className="sticky top-0 bg-card">
+                <TableRow>
+                  <TableHead className="w-[250px]">Name</TableHead>
+                  <TableHead>ID Number</TableHead>
+                  <TableHead>Organisation / Institute of visit</TableHead>
+                  <TableHead className="text-right">Total Visits</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {visitorSummary.map((summary) => (
+                  <>
+                    <TableRow key={`${summary.idNumber}-row`} className="p-0">
+                      <TableCell colSpan={5} className="p-0">
+                        <div
+                          className="flex w-full items-center p-4 cursor-pointer"
+                          onClick={() => {
+                            if (openAccordion.includes(summary.idNumber)) {
+                              setOpenAccordion(
+                                openAccordion.filter(
+                                  (v) => v !== summary.idNumber
+                                )
+                              );
+                            } else {
+                              setOpenAccordion([
+                                ...openAccordion,
+                                summary.idNumber,
+                              ]);
+                            }
+                          }}
+                        >
+                          <span className="font-medium flex items-center gap-2 flex-1 text-left">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            {summary.name}
+                          </span>
+                          <span className="flex-1 text-left">
+                            {summary.idNumber}
+                          </span>
+                          <span className="flex-1 text-left flex items-center gap-2">
+                            <Building className="h-4 w-4 text-muted-foreground" />
+                            {summary.organisation}
+                          </span>
+                          <span className="flex-1 text-right">
+                            <Badge>{summary.visitCount}</Badge>
+                          </span>
+                          <span className="w-[50px] flex justify-center">
+                            <ChevronDown
+                              className={cn(
+                                "h-4 w-4 shrink-0 transition-transform duration-200",
+                                openAccordion.includes(summary.idNumber) &&
+                                  "rotate-180"
+                              )}
+                            />
+                          </span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    {openAccordion.includes(summary.idNumber) && (
+                      <TableRow key={`${summary.idNumber}-content`}>
+                        <TableCell colSpan={5} className="p-0">
+                          <div className="p-4 bg-muted/50">
+                            <h4 className="font-semibold mb-2 text-primary">
+                              Visit History for {summary.name}
+                            </h4>
+                            <ScrollArea className="h-[200px] rounded-md border bg-card">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Check-in Time</TableHead>
+                                    <TableHead>Check-out Time</TableHead>
+                                    <TableHead>Purpose of Visit</TableHead>
+                                    <TableHead>Person Visited</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {summary.visits
+                                    .sort(
+                                      (a, b) =>
+                                        new Date(b.checkInTime).getTime() -
+                                        new Date(a.checkInTime).getTime()
+                                    )
+                                    .map((visit) => (
+                                      <TableRow key={visit.id}>
+                                        <TableCell>
+                                          <div className="flex items-center gap-2">
+                                            <Clock className="h-4 w-4 text-muted-foreground" />
+                                            {format(
+                                              new Date(visit.checkInTime),
+                                              "PPpp"
+                                            )}
+                                          </div>
+                                        </TableCell>
+                                        <TableCell>
+                                          {visit.checkOutTime ? (
+                                            <div className="flex items-center gap-2">
+                                              <Clock className="h-4 w-4 text-muted-foreground" />
+                                              {format(
+                                                new Date(visit.checkOutTime),
+                                                "PPpp"
                                               )}
-                                            </TableCell>
-                                            <TableCell>
-                                              <div className="flex items-center gap-2">
-                                                <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                                                {visit.purposeOfVisit}
-                                              </div>
-                                            </TableCell>
-                                            <TableCell>
-                                              <div className="flex items-center gap-2">
-                                                <User className="h-4 w-4 text-muted-foreground" />
-                                                {visit.personForVisit}
-                                              </div>
-                                            </TableCell>
-                                          </TableRow>
-                                        ))}
-                                    </TableBody>
-                                  </Table>
-                                </ScrollArea>
-                              </div>
-                            </AccordionContent>
-                          </TableCell>
-                        </TableRow>
-                      </>
-                    </AccordionItem>
-                  ))}
-                </TableBody>
-              </Table>
-            </Accordion>
+                                            </div>
+                                          ) : (
+                                            <Badge variant="secondary">
+                                              Still Checked In
+                                            </Badge>
+                                          )}
+                                        </TableCell>
+                                        <TableCell>
+                                          <div className="flex items-center gap-2">
+                                            <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                                            {visit.purposeOfVisit}
+                                          </div>
+                                        </TableCell>
+                                        <TableCell>
+                                          <div className="flex items-center gap-2">
+                                            <User className="h-4 w-4 text-muted-foreground" />
+                                            {visit.personForVisit}
+                                          </div>
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                </TableBody>
+                              </Table>
+                            </ScrollArea>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </>
+                ))}
+              </TableBody>
+            </Table>
           </ScrollArea>
         ) : (
           <div className="h-48 flex flex-col items-center justify-center text-center">

@@ -37,6 +37,7 @@ export async function addVisitor(prevState: any, formData: FormData) {
   }
 
   try {
+    const authUser = await currentUser();
     const payload: VisitorType = {
       name: validatedFields.data.name,
       idNumber: validatedFields.data.idNumber,
@@ -44,6 +45,7 @@ export async function addVisitor(prevState: any, formData: FormData) {
       purposeOfVisit: validatedFields.data.purposeOfVisit,
       personForVisit: validatedFields.data.personForVisit,
       organisation: validatedFields.data.organisation,
+      hostId: authUser?.id ?? null,
     };
 
     const created = await createVisitor(payload);
